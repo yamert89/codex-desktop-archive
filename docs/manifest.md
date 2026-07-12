@@ -2,6 +2,8 @@
 
 Every release includes `codex-desktop-manifest.json`.
 
+New manifests describe the unified ChatGPT desktop app, including the Codex experience. Older manifests in `manifest/history/` remain unchanged historical Codex Desktop records.
+
 The manifest is designed to be readable by humans and strict enough for scripts.
 
 ## Top-Level Fields
@@ -17,12 +19,12 @@ The manifest is designed to be readable by humans and strict enough for scripts.
     "commit_sha": "0123456789abcdef0123456789abcdef01234567"
   },
   "release": {
-    "tag": "desktop-v26.527.31326",
-    "title": "Codex Desktop 26.527.31326",
+    "tag": "chatgpt-v26.707.51957",
+    "title": "ChatGPT Desktop 26.707.51957",
     "identity": {
-      "product": "codex-desktop",
-      "version": "26.527.31326",
-      "build": "3390"
+      "product": "chatgpt-desktop",
+      "version": "26.707.51957",
+      "build": "5175"
     },
     "evidence_level": "strong"
   },
@@ -57,19 +59,19 @@ Each artifact records:
 When the macOS app version is available, release tags use:
 
 ```text
-desktop-v<version>
+chatgpt-v<version>
 ```
 
 Example:
 
 ```text
-desktop-v26.527.31326
+chatgpt-v26.707.51957
 ```
 
 When app version is not available, tags fall back to:
 
 ```text
-desktop-capture-YYYY-MM-DD
+chatgpt-capture-YYYY-MM-DD
 ```
 
 Fallback manifests use `partial` evidence level. The publication workflow currently rejects partial manifests, so normal public releases require a macOS app version and strong evidence.

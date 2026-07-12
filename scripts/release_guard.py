@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed release policy checks for Codex Desktop archive publication."""
+"""Fail-closed release policy checks for ChatGPT desktop archive publication."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from typing import Any
 from urllib.parse import urlparse
 
 
-MACOS_URL = "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg"
+MACOS_URL = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"
 EXPECTED_BUNDLE_ID = "com.openai.codex"
-EXPECTED_APP_NAME = "Codex"
-EXPECTED_EXECUTABLE = "Codex"
+EXPECTED_APP_NAME = "ChatGPT"
+EXPECTED_EXECUTABLE = "ChatGPT"
 EXPECTED_TEAM_ID = "2DC432GLL2"
 EXPECTED_ORIGIN = "Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)"
 REQUIRED_VERIFICATION_CHECKS = [
@@ -67,7 +67,7 @@ def _validate_source(source: dict[str, Any]) -> None:
     parsed = urlparse(effective_url or "")
     _require(parsed.scheme == "https", "macOS effective URL must use https")
     _require(parsed.netloc == "persistent.oaistatic.com", "macOS effective URL host is not approved")
-    _require(parsed.path == "/codex-app-prod/Codex.dmg", "macOS effective URL path is not approved")
+    _require(parsed.path == "/codex-app-prod/ChatGPT.dmg", "macOS effective URL path is not approved")
     _require(source.get("http_status") == 200, "macOS source HTTP status must be 200")
     content_type = (source.get("headers") or {}).get("content-type") or source.get("content_type") or ""
     _require("apple-diskimage" in content_type, "macOS content type must be an Apple disk image")
@@ -77,9 +77,9 @@ def _validate_macos_payload(payload: dict[str, Any], version: str, build: str, *
     _require(payload.get("classification") == "full-installer", f"{label} must be a full installer")
 
     app = payload.get("app") or {}
-    _require(app.get("bundle_id") == EXPECTED_BUNDLE_ID, f"{label} bundle id does not match Codex")
-    _require(app.get("name") == EXPECTED_APP_NAME, f"{label} app name does not match Codex")
-    _require(app.get("executable") == EXPECTED_EXECUTABLE, f"{label} executable does not match Codex")
+    _require(app.get("bundle_id") == EXPECTED_BUNDLE_ID, f"{label} bundle id does not match the ChatGPT desktop app")
+    _require(app.get("name") == EXPECTED_APP_NAME, f"{label} app name does not match ChatGPT")
+    _require(app.get("executable") == EXPECTED_EXECUTABLE, f"{label} executable does not match ChatGPT")
     _require(app.get("app_count") == 1, f"{label} DMG must contain exactly one app bundle")
     _require(app.get("version") == version, f"{label} app version does not match release identity")
     _require(app.get("build") == build, f"{label} app build does not match release identity")
@@ -119,11 +119,12 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
     _require(release.get("evidence_level") == "strong", "macOS-only releases must have strong evidence")
     _require(isinstance(version, str) and re.fullmatch(r"\d+\.\d+\.\d+", version), "unsafe app version")
     _require(isinstance(build, str) and re.fullmatch(r"[A-Za-z0-9._-]+", build), "unsafe app build")
-    _require(tag == f"desktop-v{version}", "unsafe release tag")
-    _require(re.fullmatch(r"desktop-v\d+\.\d+\.\d+", tag or ""), "unsafe release tag")
+    _require(identity.get("product") == "chatgpt-desktop", "manifest product must be chatgpt-desktop")
+    _require(tag == f"chatgpt-v{version}", "unsafe release tag")
+    _require(re.fullmatch(r"chatgpt-v\d+\.\d+\.\d+", tag or ""), "unsafe release tag")
 
     artifact = _macos_artifact(manifest)
-    expected_filename = f"Codex-Desktop-{version}-macos.dmg"
+    expected_filename = f"ChatGPT-Desktop-{version}-macos.dmg"
     _require(artifact.get("filename") == expected_filename, "macOS release filename does not match version")
     _require(re.fullmatch(r"[a-f0-9]{64}", artifact.get("sha256") or ""), "macOS SHA-256 is invalid")
     _require(isinstance(artifact.get("size"), int) and artifact["size"] > 0, "macOS artifact size is invalid")
@@ -206,7 +207,7 @@ def _load_manifest(path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate Codex Desktop release security invariants.")
+    parser = argparse.ArgumentParser(description="Validate ChatGPT desktop release security invariants.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     manifest_parser = subparsers.add_parser("validate-manifest")

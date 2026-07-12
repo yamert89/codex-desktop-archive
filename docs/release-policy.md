@@ -1,5 +1,7 @@
 # Release Policy
 
+The archive now follows the unified ChatGPT desktop app, which brings Chat, Work, and Codex together. Existing Codex Desktop releases remain historical records; new captures use the `chatgpt-v<app-version>` tag series and `ChatGPT-Desktop-<app-version>-macos.dmg` asset names.
+
 ## When A Release Is Created
 
 A new GitHub Release is created only when the candidate manifest differs from `manifest/latest.json` by artifact identity.
@@ -24,13 +26,13 @@ This avoids daily duplicate releases without allowing silent release-asset drift
 Preferred tag:
 
 ```text
-desktop-v<app-version>
+chatgpt-v<app-version>
 ```
 
 Preferred macOS asset:
 
 ```text
-Codex-Desktop-<app-version>-macos.dmg
+ChatGPT-Desktop-<app-version>-macos.dmg
 ```
 
 ## Immutability

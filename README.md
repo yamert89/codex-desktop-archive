@@ -1,14 +1,14 @@
-# Codex Desktop Archive
+# ChatGPT Desktop Archive
 
-Unofficial, evidence-based archive of historical **Codex Desktop for macOS** DMG releases.
+Unofficial, evidence-based archive of historical **ChatGPT Desktop for macOS** DMG releases.
 
-Use this repository when you need to downgrade Codex Desktop, roll back to a previous version, or reinstall an older macOS DMG after a new update breaks your workflow.
+The current ChatGPT desktop app brings Chat, Work, and Codex together in one application. Use this repository when you need to roll back to a previous macOS build or reinstall an older DMG after an update breaks your workflow.
 
 Each archived release is captured from the official OpenAI-linked download URL and published with SHA-256 hashes, macOS signature checks, notarization checks, mounted DMG inventory, release notes, and a machine-readable manifest.
 
 ## Quick Links
 
-- [Download archived Codex Desktop releases](https://github.com/KonstantinMeleshkin/codex-desktop-archive/releases)
+- [Download archived ChatGPT Desktop releases](https://github.com/KonstantinMeleshkin/codex-desktop-archive/releases)
 - [Latest captured manifest](manifest/latest.json)
 - [Verification guide](docs/verification.md)
 - [Release policy](docs/release-policy.md)
@@ -16,18 +16,18 @@ Each archived release is captured from the official OpenAI-linked download URL a
 
 ## Why This Exists
 
-Codex Desktop updates are useful, but sometimes a fresh build can break an important workflow. If you did not save the previous installer, rolling back can be difficult because the official download URL points to the current build.
+ChatGPT Desktop updates are useful, but sometimes a fresh build can break an important workflow. If you did not save the previous installer, rolling back can be difficult because the official download URL points to the current build.
 
-This archive gives macOS users a transparent way to find an older Codex Desktop DMG and verify what was captured.
+This archive gives macOS users a transparent way to find an older ChatGPT Desktop DMG and verify what was captured. Codex remains part of the app and is covered by the same archived installer.
 
 Common search phrases this project is meant to answer:
 
-- download older Codex Desktop version
-- downgrade Codex Desktop on macOS
-- roll back Codex Desktop after update
-- previous Codex Desktop DMG
-- historical Codex Desktop releases
-- verified Codex Desktop macOS installer archive
+- download older ChatGPT Desktop version
+- downgrade ChatGPT Desktop on macOS
+- roll back ChatGPT Desktop after update
+- previous ChatGPT Desktop DMG
+- historical ChatGPT Desktop releases
+- verified ChatGPT Desktop macOS installer archive
 
 ## What Is Archived
 
@@ -42,12 +42,12 @@ Windows is intentionally not archived. The current official Windows path uses a 
 ## Download An Older macOS Version
 
 1. Open the [Releases page](https://github.com/KonstantinMeleshkin/codex-desktop-archive/releases).
-2. Choose the Codex Desktop version you want to restore.
-3. Download the `Codex-Desktop-*-macos.dmg` asset and `codex-desktop-manifest.json` from the same release.
+2. Choose the ChatGPT Desktop version you want to restore.
+3. Download the `ChatGPT-Desktop-*-macos.dmg` asset and `codex-desktop-manifest.json` from the same release.
 4. Verify the SHA-256 hash against the manifest before installing.
 
 ```bash
-shasum -a 256 Codex-Desktop-*-macos.dmg
+shasum -a 256 ChatGPT-Desktop-*-macos.dmg
 ```
 
 The output should match the `sha256` field for the macOS artifact in `codex-desktop-manifest.json`.
@@ -57,7 +57,10 @@ The output should match the `sha256` field for the macOS artifact in `codex-desk
 The workflow captures the macOS download linked from the official Codex page:
 
 - Codex page: <https://openai.com/codex/>
-- macOS DMG: <https://persistent.oaistatic.com/codex-app-prod/Codex.dmg>
+- macOS DMG: <https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg>
+- OpenAI release note: <https://help.openai.com/en/articles/6825453-chatgpt-release-notes#the-new-chatgpt-desktop-app-brings-chat-work-and-codex-together>
+
+The current desktop app is the unified ChatGPT application: Chat, Work, and Codex are delivered together. New archive tags therefore use the `chatgpt-v<version>` series; older `desktop-v<version>` tags remain historical Codex Desktop releases.
 
 ## Verification Model
 
@@ -73,7 +76,7 @@ Every release is based on a manifest. The manifest records:
 - macOS signature, Gatekeeper, and notarization results
 - known limitations
 
-For macOS, the workflow verifies the DMG and checks that the app is signed and notarized as:
+For macOS, the workflow verifies the DMG and checks that the ChatGPT app is signed and notarized as:
 
 ```text
 Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)
@@ -86,12 +89,12 @@ It also checks the expected app identity, bundle metadata, and mounted image con
 After checking the SHA-256 hash, you can also verify the disk image and app signature locally:
 
 ```bash
-hdiutil verify Codex-Desktop-*-macos.dmg
-hdiutil attach -readonly -nobrowse Codex-Desktop-*-macos.dmg
-codesign --verify --verbose=4 "/Volumes/Codex Installer/Codex.app"
-spctl -a -vv -t exec "/Volumes/Codex Installer/Codex.app"
-xcrun stapler validate "/Volumes/Codex Installer/Codex.app"
-hdiutil detach "/Volumes/Codex Installer"
+hdiutil verify ChatGPT-Desktop-*-macos.dmg
+hdiutil attach -readonly -nobrowse ChatGPT-Desktop-*-macos.dmg
+codesign --verify --verbose=4 "/Volumes/ChatGPT Installer/ChatGPT.app"
+spctl -a -vv -t exec "/Volumes/ChatGPT Installer/ChatGPT.app"
+xcrun stapler validate "/Volumes/ChatGPT Installer/ChatGPT.app"
+hdiutil detach "/Volumes/ChatGPT Installer"
 ```
 
 See [docs/verification.md](docs/verification.md) for the full verification guide.

@@ -16,7 +16,7 @@ The manifest is the source of truth for the expected hash, size, source URL, wor
 ### 1. Compare SHA-256
 
 ```bash
-shasum -a 256 Codex-Desktop-*-macos.dmg
+shasum -a 256 ChatGPT-Desktop-*-macos.dmg
 ```
 
 Compare the output with:
@@ -34,24 +34,24 @@ for the artifact where:
 ### 2. Verify The DMG
 
 ```bash
-hdiutil verify Codex-Desktop-*-macos.dmg
+hdiutil verify ChatGPT-Desktop-*-macos.dmg
 ```
 
 ### 3. Mount Read-Only
 
 ```bash
-hdiutil attach -readonly -nobrowse Codex-Desktop-*-macos.dmg
+hdiutil attach -readonly -nobrowse ChatGPT-Desktop-*-macos.dmg
 ```
 
 The mounted volume name may vary. Use `hdiutil info` if needed.
 
-The workflow records the mounted DMG top-level inventory in the manifest and rejects unexpected top-level entries or executable/package/script payloads outside `Codex.app`.
+The workflow records the mounted DMG top-level inventory in the manifest and rejects unexpected top-level entries or executable/package/script payloads outside `ChatGPT.app`.
 
 ### 4. Verify The App Signature
 
 ```bash
-codesign --verify --verbose=4 "/Volumes/Codex Installer/Codex.app"
-codesign -dv --verbose=4 "/Volumes/Codex Installer/Codex.app"
+codesign --verify --verbose=4 "/Volumes/ChatGPT Installer/ChatGPT.app"
+codesign -dv --verbose=4 "/Volumes/ChatGPT Installer/ChatGPT.app"
 ```
 
 The signing identity should include:
@@ -63,19 +63,19 @@ Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)
 ### 5. Verify Gatekeeper Assessment
 
 ```bash
-spctl -a -vv -t exec "/Volumes/Codex Installer/Codex.app"
+spctl -a -vv -t exec "/Volumes/ChatGPT Installer/ChatGPT.app"
 ```
 
 ### 6. Verify Notarization Ticket
 
 ```bash
-xcrun stapler validate "/Volumes/Codex Installer/Codex.app"
+xcrun stapler validate "/Volumes/ChatGPT Installer/ChatGPT.app"
 ```
 
 ### 7. Detach The Volume
 
 ```bash
-hdiutil detach "/Volumes/Codex Installer"
+hdiutil detach "/Volumes/ChatGPT Installer"
 ```
 
 ## Evidence Levels

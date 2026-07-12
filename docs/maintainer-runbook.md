@@ -6,15 +6,17 @@ The scheduled workflow runs daily at `06:17 UTC`. It can also be run manually wi
 
 Expected outcomes:
 
-- New Codex Desktop version: workflow publishes a new release.
-- Same Codex Desktop version: workflow skips release creation after verifying the existing GitHub Release still matches `manifest/latest.json`.
+- New ChatGPT Desktop version: workflow publishes a new release.
+- Same ChatGPT Desktop version: workflow skips release creation after verifying the existing GitHub Release still matches `manifest/latest.json`.
 - Verification failure: workflow fails and publishes nothing.
+
+The first successful run after the migration creates the first ChatGPT Desktop release from `ChatGPT.dmg`. It does not rewrite the previous Codex Desktop manifest history.
 
 ## Manual Run
 
 Use GitHub Actions:
 
-1. Open the `Capture Codex Desktop` workflow.
+1. Open the `Capture ChatGPT Desktop` workflow.
 2. Run `workflow_dispatch`.
 3. Inspect the workflow summary.
 4. If a release was created, verify the attached manifest and release notes.

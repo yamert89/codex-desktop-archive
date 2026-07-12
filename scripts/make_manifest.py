@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build release manifests for the Codex Desktop archive."""
+"""Build release manifests for the ChatGPT desktop archive."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ from typing import Any
 
 SCHEMA_VERSION = "1.0"
 SOURCE_PAGE = "https://openai.com/codex/"
-MACOS_URL = "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg"
+MACOS_URL = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"
 
 LIMITATIONS = [
     "This project is not affiliated with OpenAI.",
     "Artifacts are archived from official OpenAI-linked download URLs.",
     "Historical byte identity cannot be proven without an OpenAI-published historical hash.",
-    "This archive supports macOS Codex Desktop only.",
+    "This archive supports the macOS ChatGPT desktop app, which includes Codex.",
 ]
 
 
@@ -41,23 +41,23 @@ def release_identity(artifacts: list[dict[str, Any]], captured_at: str) -> dict[
 
     if version:
         identity = {
-            "product": "codex-desktop",
+            "product": "chatgpt-desktop",
             "version": version,
             "build": build,
         }
         return {
-            "tag": f"desktop-v{version}",
-            "title": f"Codex Desktop {version}",
+            "tag": f"chatgpt-v{version}",
+            "title": f"ChatGPT Desktop {version}",
             "identity": identity,
             "evidence_level": "strong",
         }
 
     capture_date = captured_at[:10]
     return {
-        "tag": f"desktop-capture-{capture_date}",
-        "title": f"Codex Desktop capture {capture_date}",
+        "tag": f"chatgpt-capture-{capture_date}",
+        "title": f"ChatGPT Desktop capture {capture_date}",
         "identity": {
-            "product": "codex-desktop",
+            "product": "chatgpt-desktop",
             "version": None,
             "build": None,
         },
@@ -79,7 +79,7 @@ def build_manifest(
     if version:
         for artifact in sorted_artifacts:
             if artifact.get("platform") == "macos":
-                artifact["filename"] = f"Codex-Desktop-{version}-macos.dmg"
+                artifact["filename"] = f"ChatGPT-Desktop-{version}-macos.dmg"
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -127,7 +127,7 @@ def _artifact_from_inputs(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a Codex Desktop release manifest.")
+    parser = argparse.ArgumentParser(description="Build a ChatGPT desktop release manifest.")
     parser.add_argument("--repository", required=True)
     parser.add_argument("--workflow-run-id", required=True)
     parser.add_argument("--workflow-sha", required=True)

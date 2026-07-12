@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Decide whether a candidate Codex Desktop manifest deserves a new release."""
+"""Decide whether a candidate ChatGPT desktop manifest deserves a new release."""
 
 from __future__ import annotations
 

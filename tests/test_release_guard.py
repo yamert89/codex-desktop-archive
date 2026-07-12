@@ -26,34 +26,34 @@ def valid_manifest():
         "repository": "KonstantinMeleshkin/codex-desktop-archive",
         "workflow": {"run_id": "123", "commit_sha": "a" * 40},
         "release": {
-            "tag": "desktop-v26.527.31326",
-            "title": "Codex Desktop 26.527.31326",
-            "identity": {"product": "codex-desktop", "version": "26.527.31326", "build": "3390"},
+            "tag": "chatgpt-v26.707.51957",
+            "title": "ChatGPT Desktop 26.707.51957",
+            "identity": {"product": "chatgpt-desktop", "version": "26.707.51957", "build": "5175"},
             "evidence_level": "strong",
         },
         "artifacts": [
             {
                 "platform": "macos",
                 "classification": "full-installer",
-                "filename": "Codex-Desktop-26.527.31326-macos.dmg",
+                "filename": "ChatGPT-Desktop-26.707.51957-macos.dmg",
                 "sha256": MAC_SHA,
                 "size": 13,
                 "source": {
-                    "url": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg",
-                    "effective_url": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg",
+                    "url": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg",
+                    "effective_url": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg",
                     "http_status": 200,
                     "headers": {"content-type": "application/x-apple-diskimage"},
                 },
                 "app": {
                     "bundle_id": "com.openai.codex",
-                    "name": "Codex",
-                    "executable": "Codex",
+                    "name": "ChatGPT",
+                    "executable": "ChatGPT",
                     "app_count": 1,
-                    "version": "26.527.31326",
-                    "build": "3390",
+                    "version": "26.707.51957",
+                    "build": "5175",
                 },
                 "dmg": {
-                    "top_level_entries": ["Applications", "Codex.app"],
+                    "top_level_entries": ["Applications", "ChatGPT.app"],
                     "unexpected_top_level_entries": [],
                     "external_payloads": [],
                 },
@@ -105,7 +105,7 @@ class ReleaseGuardTests(unittest.TestCase):
 
     def test_rejects_unsafe_release_tag(self):
         manifest = valid_manifest()
-        manifest["release"]["tag"] = "desktop-v26.527.31326\nbad"
+        manifest["release"]["tag"] = "chatgpt-v26.707.51957\nbad"
 
         with self.assertRaisesRegex(SecurityPolicyError, "unsafe release tag"):
             validate_manifest(manifest)
@@ -150,7 +150,7 @@ class ReleaseGuardTests(unittest.TestCase):
 
     def test_rejects_unexpected_source_url(self):
         manifest = valid_manifest()
-        manifest["artifacts"][0]["source"]["effective_url"] = "https://example.com/Codex.dmg"
+        manifest["artifacts"][0]["source"]["effective_url"] = "https://example.com/ChatGPT.dmg"
 
         with self.assertRaisesRegex(SecurityPolicyError, "macOS effective URL"):
             validate_manifest(manifest)
@@ -159,14 +159,14 @@ class ReleaseGuardTests(unittest.TestCase):
         manifest = valid_manifest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "Codex-Desktop-26.527.31326-macos.dmg").write_bytes(b"codex desktop")
+            (root / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
             verify_asset_directory(manifest, root, require_manifest_asset=False)
 
     def test_verify_asset_directory_rejects_extra_assets(self):
         manifest = valid_manifest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "Codex-Desktop-26.527.31326-macos.dmg").write_bytes(b"codex desktop")
+            (root / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
             (root / "unexpected.dmg").write_text("bad", encoding="utf-8")
 
             with self.assertRaisesRegex(SecurityPolicyError, "unexpected release asset"):
@@ -180,7 +180,7 @@ class ReleaseGuardTests(unittest.TestCase):
             asset_dir.mkdir()
             expected_notes = root / "expected-release-notes.md"
             expected_notes.write_text("trusted notes\n", encoding="utf-8")
-            (asset_dir / "Codex-Desktop-26.527.31326-macos.dmg").write_bytes(b"codex desktop")
+            (asset_dir / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
             (asset_dir / "codex-desktop-manifest.json").write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
@@ -200,7 +200,7 @@ class ReleaseGuardTests(unittest.TestCase):
         inspection = valid_inspection()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "Codex-Desktop-26.527.31326-macos.dmg"
+            artifact = root / "ChatGPT-Desktop-26.707.51957-macos.dmg"
             inspection_path = root / "inspection.json"
             artifact.write_bytes(b"codex desktop")
             inspection_path.write_text(json.dumps(inspection), encoding="utf-8")
@@ -213,7 +213,7 @@ class ReleaseGuardTests(unittest.TestCase):
         inspection["app"]["bundle_id"] = "com.openai.other"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "Codex-Desktop-26.527.31326-macos.dmg"
+            artifact = root / "ChatGPT-Desktop-26.707.51957-macos.dmg"
             inspection_path = root / "inspection.json"
             artifact.write_bytes(b"codex desktop")
             inspection_path.write_text(json.dumps(inspection), encoding="utf-8")

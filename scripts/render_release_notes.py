@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render GitHub release notes from a Codex Desktop manifest."""
+"""Render GitHub release notes from a ChatGPT desktop manifest."""
 
 from __future__ import annotations
 
@@ -45,8 +45,6 @@ def render_release_notes(manifest: dict[str, Any]) -> str:
     release = manifest.get("release", {})
     limitations = manifest.get("limitations", [])
     sections = [
-        f"# {release.get('title', 'Codex Desktop capture')}",
-        "",
         f"- Captured at: `{manifest.get('captured_at')}`",
         f"- Evidence level: `{release.get('evidence_level', 'unknown')}`",
         f"- Source page: {manifest.get('source_page')}",

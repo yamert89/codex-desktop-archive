@@ -14,8 +14,8 @@ class RenderReleaseNotesTests(unittest.TestCase):
             "captured_at": "2026-05-30T12:34:56Z",
             "source_page": "https://openai.com/codex/",
             "release": {
-                "tag": "desktop-v26.527.31326",
-                "title": "Codex Desktop 26.527.31326",
+                "tag": "chatgpt-v26.707.51957",
+                "title": "ChatGPT Desktop 26.707.51957",
                 "evidence_level": "strong",
             },
             "artifacts": [
@@ -24,9 +24,9 @@ class RenderReleaseNotesTests(unittest.TestCase):
                     "classification": "full-installer",
                     "sha256": "mac-sha",
                     "size": 400814855,
-                    "source": {"url": "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg"},
-                    "app": {"version": "26.527.31326", "build": "3390"},
-                    "dmg": {"top_level_entries": ["Applications", "Codex.app"], "external_payloads": []},
+                    "source": {"url": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"},
+                    "app": {"version": "26.707.51957", "build": "5175"},
+                    "dmg": {"top_level_entries": ["Applications", "ChatGPT.app"], "external_payloads": []},
                     "verification": {"passed": True, "team_id": "2DC432GLL2"},
                 }
             ],
@@ -35,7 +35,8 @@ class RenderReleaseNotesTests(unittest.TestCase):
 
         notes = render_release_notes(manifest)
 
-        self.assertIn("# Codex Desktop 26.527.31326", notes)
+        self.assertNotIn("# ChatGPT Desktop 26.707.51957", notes)
+        self.assertFalse(notes.startswith("#"))
         self.assertIn("Evidence level: `strong`", notes)
         self.assertIn("macos", notes)
         self.assertIn("mac-sha", notes)

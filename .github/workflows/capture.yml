@@ -1,4 +1,4 @@
-name: Capture Codex Desktop
+name: Capture ChatGPT Desktop
 
 on:
   workflow_dispatch:
@@ -9,11 +9,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: codex-desktop-capture
+  group: chatgpt-desktop-capture
   cancel-in-progress: false
 
 env:
-  MACOS_URL: https://persistent.oaistatic.com/codex-app-prod/Codex.dmg
+  MACOS_URL: https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg
 
 jobs:
   validate:
@@ -38,7 +38,7 @@ jobs:
         run: python3 -m py_compile scripts/make_manifest.py scripts/render_release_notes.py scripts/should_release.py scripts/release_guard.py
 
   capture-macos:
-    name: Capture macOS DMG
+    name: Capture ChatGPT macOS DMG
     needs: validate
     runs-on: macos-latest
     steps:
@@ -46,11 +46,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download official macOS artifact
-        run: ./scripts/capture_source.sh macos "$MACOS_URL" artifacts/Codex.dmg out/macos-source.json
+      - name: Download official ChatGPT macOS artifact
+        run: ./scripts/capture_source.sh macos "$MACOS_URL" artifacts/ChatGPT.dmg out/macos-source.json
 
       - name: Inspect macOS signature and notarization
-        run: ./scripts/inspect_macos.sh artifacts/Codex.dmg out/macos-inspection.json
+        run: ./scripts/inspect_macos.sh artifacts/ChatGPT.dmg out/macos-inspection.json
 
       - name: Upload macOS capture
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -58,7 +58,7 @@ jobs:
           name: capture-macos
           retention-days: 3
           path: |
-            artifacts/Codex.dmg
+            artifacts/ChatGPT.dmg
             out/macos-source.json
             out/macos-inspection.json
 
@@ -83,7 +83,7 @@ jobs:
           merge-multiple: true
 
       - name: Re-inspect macOS artifact before publication
-        run: ./scripts/inspect_macos.sh dist/artifacts/Codex.dmg out/publish-macos-inspection.json
+        run: ./scripts/inspect_macos.sh dist/artifacts/ChatGPT.dmg out/publish-macos-inspection.json
 
       - name: Build and validate candidate manifest
         run: |
@@ -91,7 +91,7 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --workflow-run-id "$GITHUB_RUN_ID" \
             --workflow-sha "$GITHUB_SHA" \
-            --macos-artifact dist/artifacts/Codex.dmg \
+            --macos-artifact dist/artifacts/ChatGPT.dmg \
             --macos-source dist/out/macos-source.json \
             --macos-inspection out/publish-macos-inspection.json \
             --output out/candidate-manifest.json
@@ -142,7 +142,7 @@ jobs:
           )"
 
           mkdir -p release-package/release-assets
-          cp dist/artifacts/Codex.dmg "release-package/release-assets/Codex-Desktop-${version}-macos.dmg"
+          cp dist/artifacts/ChatGPT.dmg "release-package/release-assets/ChatGPT-Desktop-${version}-macos.dmg"
           cp out/candidate-manifest.json release-package/candidate-manifest.json
           cp out/release-notes.md release-package/release-notes.md
           python3 scripts/release_guard.py verify-assets \
@@ -178,7 +178,7 @@ jobs:
 
       - name: Re-inspect macOS artifact before final publication
         run: |
-          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'Codex-Desktop-*-macos.dmg' -print -quit)"
+          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-macos.dmg' -print -quit)"
           ./scripts/inspect_macos.sh "$macos_asset" out/final-publish-macos-inspection.json
           python3 scripts/release_guard.py verify-local-artifact \
             --manifest release-package/candidate-manifest.json \
@@ -189,7 +189,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'Codex-Desktop-*-macos.dmg' -print -quit)"
+          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-macos.dmg' -print -quit)"
           ./scripts/publish_release.sh \
             release-package/candidate-manifest.json \
             release-package/release-notes.md \

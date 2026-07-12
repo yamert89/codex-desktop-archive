@@ -14,7 +14,7 @@ Examples:
 
 ## Not In Scope
 
-- Vulnerabilities in Codex Desktop itself
+- Vulnerabilities in ChatGPT or Codex themselves
 - Vulnerabilities in OpenAI's download infrastructure
 - Requests for official OpenAI support
 
@@ -27,7 +27,7 @@ If the report involves a sensitive exploit path, avoid posting exploit details p
 ## Security Principles
 
 - No silent release overwrites.
-- No custom repackaging of Codex Desktop installers.
+- No custom repackaging of ChatGPT Desktop installers.
 - No stronger claims than stored evidence supports.
 - macOS releases must pass signature and notarization checks before publication.
-- macOS DMGs must not contain unexpected top-level entries or executable/package/script payloads outside `Codex.app`.
+- macOS DMGs must not contain unexpected top-level entries or executable/package/script payloads outside `ChatGPT.app`.

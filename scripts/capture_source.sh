@@ -10,7 +10,7 @@ platform="$1"
 url="$2"
 artifact_output="$3"
 metadata_output="$4"
-macos_url="https://persistent.oaistatic.com/codex-app-prod/Codex.dmg"
+macos_url="https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"
 
 tmpdir="$(mktemp -d)"
 headers_file="$tmpdir/headers.txt"
@@ -39,6 +39,7 @@ esac
 curl \
   --proto '=https' \
   --tlsv1.2 \
+  --header 'Accept-Encoding: identity' \
   --fail \
   --show-error \
   --silent \

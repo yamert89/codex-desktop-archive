@@ -23,6 +23,14 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("./scripts/inspect_macos.sh \"$macos_asset\" out/final-publish-macos-inspection.json", publish_section)
         self.assertIn("python3 scripts/release_guard.py verify-local-artifact", publish_section)
 
+    def test_workflow_uses_chatgpt_source_and_artifact_names(self):
+        workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("MACOS_URL: https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg", workflow)
+        self.assertIn("artifacts/ChatGPT.dmg", workflow)
+        self.assertIn("ChatGPT-Desktop-${version}-macos.dmg", workflow)
+        self.assertNotIn("Codex-Desktop-${version}-macos.dmg", workflow)
+
     def test_publish_script_creates_git_tag_before_draft_release(self):
         script = PUBLISH_SCRIPT.read_text(encoding="utf-8")
 

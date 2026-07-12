@@ -1,6 +1,6 @@
 ---
 name: Verification question
-about: Ask about verifying an archived Codex Desktop release
+about: Ask about verifying an archived ChatGPT Desktop release
 title: "[verification] "
 labels: verification
 assignees: ""

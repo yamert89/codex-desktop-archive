@@ -9,8 +9,8 @@ fi
 dmg_path="$1"
 output_path="$2"
 expected_bundle_id="com.openai.codex"
-expected_name="Codex"
-expected_executable="Codex"
+expected_name="ChatGPT"
+expected_executable="ChatGPT"
 expected_team_id="2DC432GLL2"
 expected_origin="Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)"
 
@@ -44,9 +44,9 @@ fi
 hdiutil attach -readonly -nobrowse -mountpoint "$mount_root" "$dmg_path" >/dev/null
 
 app_count="$(find "$mount_root" -maxdepth 2 -type d -name '*.app' -print | wc -l | tr -d ' ')"
-app_path="$(find "$mount_root" -maxdepth 2 -type d -name 'Codex.app' -print -quit)"
+app_path="$(find "$mount_root" -maxdepth 2 -type d -name 'ChatGPT.app' -print -quit)"
 if [ -z "$app_path" ]; then
-  echo "No Codex.app bundle found in DMG" >&2
+  echo "No ChatGPT.app bundle found in DMG" >&2
   exit 1
 fi
 
@@ -146,7 +146,7 @@ logs = {
 
 allowed_top_level_entries = {
     "Applications",
-    "Codex.app",
+    "ChatGPT.app",
     ".background",
     ".DS_Store",
     ".fseventsd",
