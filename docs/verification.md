@@ -6,17 +6,17 @@ This guide explains how to verify a release from this archive.
 
 From a GitHub Release, download:
 
-- the macOS DMG
-- `codex-desktop-manifest.json`
+- `ChatGPT-Desktop-<version>-linux-amd64.deb` or `ChatGPT-Desktop-<version>-linux-arm64.deb`
+- `chatgpt-deb-manifest.json`
 
-The manifest is the source of truth for the expected hash, size, source URL, workflow run, and verification results.
+The manifest is the source of truth for the expected hash, size, source URL, workflow run, package metadata, and verification results.
 
-## macOS
+## Linux DEB
 
 ### 1. Compare SHA-256
 
 ```bash
-shasum -a 256 ChatGPT-Desktop-*-macos.dmg
+sha256sum ChatGPT-Desktop-*-linux-*.deb
 ```
 
 Compare the output with:
@@ -28,68 +28,70 @@ artifacts[].sha256
 for the artifact where:
 
 ```json
-"platform": "macos"
+"platform": "linux",
+"format": "deb",
+"architecture": "amd64"
 ```
 
-### 2. Verify The DMG
+Use `"arm64"` when verifying the ARM64 package.
+
+### 2. Inspect Package Metadata
 
 ```bash
-hdiutil verify ChatGPT-Desktop-*-macos.dmg
+dpkg-deb -I ChatGPT-Desktop-*-linux-amd64.deb
 ```
 
-### 3. Mount Read-Only
+Confirm the package metadata matches the manifest:
+
+- `Package: chatgpt`
+- `Version`
+- `Architecture`
+- `Maintainer`
+- dependency fields
+
+### 3. Inspect Package Contents
 
 ```bash
-hdiutil attach -readonly -nobrowse ChatGPT-Desktop-*-macos.dmg
+dpkg-deb -c ChatGPT-Desktop-*-linux-amd64.deb
 ```
 
-The mounted volume name may vary. Use `hdiutil info` if needed.
+The manifest records the payload inventory and rejects unexpected executable payloads outside ordinary Linux package locations.
 
-The workflow records the mounted DMG top-level inventory in the manifest and rejects unexpected top-level entries or executable/package/script payloads outside `ChatGPT.app`.
-
-### 4. Verify The App Signature
+### 4. Inspect Maintainer Scripts Without Running Them
 
 ```bash
-codesign --verify --verbose=4 "/Volumes/ChatGPT Installer/ChatGPT.app"
-codesign -dv --verbose=4 "/Volumes/ChatGPT Installer/ChatGPT.app"
+tmpdir="$(mktemp -d)"
+dpkg-deb -e ChatGPT-Desktop-*-linux-amd64.deb "$tmpdir/control"
+find "$tmpdir/control" -maxdepth 1 -type f -print
 ```
 
-The signing identity should include:
+Maintainer scripts such as `postinst` or `prerm` are not executed by the workflow. The workflow records their names, sizes, and SHA-256 hashes.
 
-```text
-Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)
-```
-
-### 5. Verify Gatekeeper Assessment
+### 5. Install Only After Verification
 
 ```bash
-spctl -a -vv -t exec "/Volumes/ChatGPT Installer/ChatGPT.app"
+sudo apt install ./ChatGPT-Desktop-*-linux-amd64.deb
 ```
 
-### 6. Verify Notarization Ticket
-
-```bash
-xcrun stapler validate "/Volumes/ChatGPT Installer/ChatGPT.app"
-```
-
-### 7. Detach The Volume
-
-```bash
-hdiutil detach "/Volumes/ChatGPT Installer"
-```
+Use the `arm64` asset on ARM64 systems.
 
 ## Evidence Levels
 
 `strong` means:
 
-- the artifact hash and size were recorded
-- the source URL metadata was recorded
-- macOS signature checks passed
-- macOS notarization checks passed
-- OpenAI Team ID matched `2DC432GLL2`
-- mounted DMG inventory had no unexpected top-level entries or external executable/package/script payloads
+- both amd64 and arm64 DEB packages were captured
+- artifact hashes and sizes were recorded
+- source URL metadata was recorded
+- package metadata was readable
+- package name and architecture matched policy
+- both packages reported the same version
+- payload inventory was recorded
+- maintainer scripts were inventoried without executing them
+- no unexpected executable payloads were detected
 
 `partial` means:
 
 - the artifact hash and source metadata were recorded
-- at least one stronger app-level verification step was unavailable
+- at least one stronger package-level verification step was unavailable
+
+The publication workflow rejects partial manifests.

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 4 ]; then
-  echo "usage: $0 <manifest-json> <release-notes-md> <macos-artifact> <fresh-inspection-json>" >&2
+if [ "$#" -ne 6 ]; then
+  echo "usage: $0 <manifest-json> <release-notes-md> <amd64-artifact> <arm64-artifact> <amd64-inspection-json> <arm64-inspection-json>" >&2
   exit 64
 fi
 
 manifest_path="$1"
 release_notes_path="$2"
-artifact_path="$3"
-inspection_path="$4"
+amd64_artifact_path="$3"
+arm64_artifact_path="$4"
+amd64_inspection_path="$5"
+arm64_inspection_path="$6"
 
 tmpdir="$(mktemp -d)"
 cleanup() {
@@ -31,6 +33,22 @@ for part in sys.argv[2].split("."):
     else:
         value = value[part]
 print(value)
+PY
+}
+
+artifact_filename_for_arch() {
+  python3 - "$manifest_path" "$1" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+arch = sys.argv[2]
+for artifact in manifest["artifacts"]:
+    if artifact["architecture"] == arch:
+        print(artifact["filename"])
+        raise SystemExit(0)
+raise SystemExit(f"missing artifact for {arch}")
 PY
 }
 
@@ -97,29 +115,33 @@ ensure_release_tag() {
 tag="$(read_manifest_field release.tag)"
 title="$(read_manifest_field release.title)"
 target_sha="$(read_manifest_field workflow.commit_sha)"
-artifact_filename="$(read_manifest_field artifacts.0.filename)"
+amd64_filename="$(artifact_filename_for_arch amd64)"
+arm64_filename="$(artifact_filename_for_arch arm64)"
 
 python3 scripts/release_guard.py validate-manifest --manifest "$manifest_path"
 
 staged_assets="$tmpdir/new-assets"
 mkdir -p "$staged_assets"
 
-if [ ! -f "$artifact_path" ]; then
-  echo "Missing release artifact: $artifact_path" >&2
-  exit 1
-fi
-if [ ! -f "$inspection_path" ]; then
-  echo "Missing fresh macOS inspection: $inspection_path" >&2
-  exit 1
-fi
+for path in "$amd64_artifact_path" "$arm64_artifact_path" "$amd64_inspection_path" "$arm64_inspection_path"; do
+  if [ ! -f "$path" ]; then
+    echo "Missing release input: $path" >&2
+    exit 1
+  fi
+done
 
 python3 scripts/release_guard.py verify-local-artifact \
   --manifest "$manifest_path" \
-  --artifact "$artifact_path" \
-  --inspection "$inspection_path"
+  --artifact "$amd64_artifact_path" \
+  --inspection "$amd64_inspection_path"
+python3 scripts/release_guard.py verify-local-artifact \
+  --manifest "$manifest_path" \
+  --artifact "$arm64_artifact_path" \
+  --inspection "$arm64_inspection_path"
 
-cp "$artifact_path" "$staged_assets/$artifact_filename"
-cp "$manifest_path" "$staged_assets/codex-desktop-manifest.json"
+cp "$amd64_artifact_path" "$staged_assets/$amd64_filename"
+cp "$arm64_artifact_path" "$staged_assets/$arm64_filename"
+cp "$manifest_path" "$staged_assets/chatgpt-deb-manifest.json"
 cp "$release_notes_path" "$staged_assets/release-notes.md"
 python3 scripts/release_guard.py verify-assets \
   --manifest "$manifest_path" \
@@ -146,8 +168,9 @@ fi
 ensure_release_tag "$tag" "$target_sha"
 
 gh release create "$tag" \
-  "$staged_assets/$artifact_filename" \
-  "$staged_assets/codex-desktop-manifest.json" \
+  "$staged_assets/$amd64_filename" \
+  "$staged_assets/$arm64_filename" \
+  "$staged_assets/chatgpt-deb-manifest.json" \
   "$staged_assets/release-notes.md" \
   --draft \
   --title "$title" \

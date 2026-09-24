@@ -1,4 +1,4 @@
-name: Capture ChatGPT Desktop
+name: Capture ChatGPT Linux DEB
 
 on:
   workflow_dispatch:
@@ -9,11 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: chatgpt-desktop-capture
+  group: chatgpt-linux-deb-capture
   cancel-in-progress: false
 
 env:
-  MACOS_URL: https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg
+  DEB_AMD64_URL: https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb
+  DEB_ARM64_URL: https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_arm64.deb
 
 jobs:
   validate:
@@ -30,42 +31,48 @@ jobs:
       - name: Check shell syntax
         run: |
           bash -n scripts/capture_source.sh
-          bash -n scripts/inspect_macos.sh
           bash -n scripts/publish_release.sh
           bash -n scripts/verify_existing_release.sh
 
       - name: Check Python syntax
-        run: python3 -m py_compile scripts/make_manifest.py scripts/render_release_notes.py scripts/should_release.py scripts/release_guard.py
+        run: python3 -m py_compile scripts/inspect_deb.py scripts/make_manifest.py scripts/render_release_notes.py scripts/should_release.py scripts/release_guard.py
 
-  capture-macos:
-    name: Capture ChatGPT macOS DMG
+  capture-deb:
+    name: Capture ChatGPT Linux DEB packages
     needs: validate
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           persist-credentials: false
 
-      - name: Download official ChatGPT macOS artifact
-        run: ./scripts/capture_source.sh macos "$MACOS_URL" artifacts/ChatGPT.dmg out/macos-source.json
+      - name: Download official ChatGPT Linux DEB artifacts
+        run: |
+          ./scripts/capture_source.sh amd64 "$DEB_AMD64_URL" artifacts/chatgpt_amd64.deb out/deb-amd64-source.json
+          ./scripts/capture_source.sh arm64 "$DEB_ARM64_URL" artifacts/chatgpt_arm64.deb out/deb-arm64-source.json
 
-      - name: Inspect macOS signature and notarization
-        run: ./scripts/inspect_macos.sh artifacts/ChatGPT.dmg out/macos-inspection.json
+      - name: Inspect Linux DEB packages
+        run: |
+          python3 scripts/inspect_deb.py artifacts/chatgpt_amd64.deb out/deb-amd64-inspection.json --architecture amd64
+          python3 scripts/inspect_deb.py artifacts/chatgpt_arm64.deb out/deb-arm64-inspection.json --architecture arm64
 
-      - name: Upload macOS capture
+      - name: Upload Linux DEB capture
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: capture-macos
+          name: capture-deb
           retention-days: 3
           path: |
-            artifacts/ChatGPT.dmg
-            out/macos-source.json
-            out/macos-inspection.json
+            artifacts/chatgpt_amd64.deb
+            artifacts/chatgpt_arm64.deb
+            out/deb-amd64-source.json
+            out/deb-arm64-source.json
+            out/deb-amd64-inspection.json
+            out/deb-arm64-inspection.json
 
   verify-release:
     name: Verify release package
-    needs: capture-macos
-    runs-on: macos-latest
+    needs: capture-deb
+    runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.decision.outputs.should_release }}
       tag: ${{ steps.decision.outputs.tag }}
@@ -82,8 +89,10 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Re-inspect macOS artifact before publication
-        run: ./scripts/inspect_macos.sh dist/artifacts/ChatGPT.dmg out/publish-macos-inspection.json
+      - name: Re-inspect Linux DEB packages before publication
+        run: |
+          python3 scripts/inspect_deb.py dist/artifacts/chatgpt_amd64.deb out/publish-deb-amd64-inspection.json --architecture amd64
+          python3 scripts/inspect_deb.py dist/artifacts/chatgpt_arm64.deb out/publish-deb-arm64-inspection.json --architecture arm64
 
       - name: Build and validate candidate manifest
         run: |
@@ -91,9 +100,12 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --workflow-run-id "$GITHUB_RUN_ID" \
             --workflow-sha "$GITHUB_SHA" \
-            --macos-artifact dist/artifacts/ChatGPT.dmg \
-            --macos-source dist/out/macos-source.json \
-            --macos-inspection out/publish-macos-inspection.json \
+            --deb-artifact dist/artifacts/chatgpt_amd64.deb \
+            --deb-source dist/out/deb-amd64-source.json \
+            --deb-inspection out/publish-deb-amd64-inspection.json \
+            --deb-artifact dist/artifacts/chatgpt_arm64.deb \
+            --deb-source dist/out/deb-arm64-source.json \
+            --deb-inspection out/publish-deb-arm64-inspection.json \
             --output out/candidate-manifest.json
 
           python3 scripts/release_guard.py validate-manifest --manifest out/candidate-manifest.json
@@ -142,7 +154,8 @@ jobs:
           )"
 
           mkdir -p release-package/release-assets
-          cp dist/artifacts/ChatGPT.dmg "release-package/release-assets/ChatGPT-Desktop-${version}-macos.dmg"
+          cp dist/artifacts/chatgpt_amd64.deb "release-package/release-assets/ChatGPT-Desktop-${version}-linux-amd64.deb"
+          cp dist/artifacts/chatgpt_arm64.deb "release-package/release-assets/ChatGPT-Desktop-${version}-linux-arm64.deb"
           cp out/candidate-manifest.json release-package/candidate-manifest.json
           cp out/release-notes.md release-package/release-notes.md
           python3 scripts/release_guard.py verify-assets \
@@ -161,7 +174,7 @@ jobs:
     name: Publish verified release
     needs: verify-release
     if: needs.verify-release.outputs.should_release == 'true'
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -176,22 +189,31 @@ jobs:
           name: release-package
           path: release-package
 
-      - name: Re-inspect macOS artifact before final publication
+      - name: Re-inspect Linux DEB packages before final publication
         run: |
-          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-macos.dmg' -print -quit)"
-          ./scripts/inspect_macos.sh "$macos_asset" out/final-publish-macos-inspection.json
+          amd64_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-linux-amd64.deb' -print -quit)"
+          arm64_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-linux-arm64.deb' -print -quit)"
+          python3 scripts/inspect_deb.py "$amd64_asset" out/final-publish-deb-amd64-inspection.json --architecture amd64
+          python3 scripts/inspect_deb.py "$arm64_asset" out/final-publish-deb-arm64-inspection.json --architecture arm64
           python3 scripts/release_guard.py verify-local-artifact \
             --manifest release-package/candidate-manifest.json \
-            --artifact "$macos_asset" \
-            --inspection out/final-publish-macos-inspection.json
+            --artifact "$amd64_asset" \
+            --inspection out/final-publish-deb-amd64-inspection.json
+          python3 scripts/release_guard.py verify-local-artifact \
+            --manifest release-package/candidate-manifest.json \
+            --artifact "$arm64_asset" \
+            --inspection out/final-publish-deb-arm64-inspection.json
 
       - name: Publish release without overwriting existing assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          macos_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-macos.dmg' -print -quit)"
+          amd64_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-linux-amd64.deb' -print -quit)"
+          arm64_asset="$(find release-package/release-assets -maxdepth 1 -name 'ChatGPT-Desktop-*-linux-arm64.deb' -print -quit)"
           ./scripts/publish_release.sh \
             release-package/candidate-manifest.json \
             release-package/release-notes.md \
-            "$macos_asset" \
-            out/final-publish-macos-inspection.json
+            "$amd64_asset" \
+            "$arm64_asset" \
+            out/final-publish-deb-amd64-inspection.json \
+            out/final-publish-deb-arm64-inspection.json

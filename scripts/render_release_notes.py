@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render GitHub release notes from a ChatGPT desktop manifest."""
+"""Render GitHub release notes from a ChatGPT Linux DEB manifest."""
 
 from __future__ import annotations
 
@@ -10,12 +10,13 @@ from typing import Any
 
 
 def _artifact_section(artifact: dict[str, Any]) -> str:
-    app = artifact.get("app") or {}
-    dmg = artifact.get("dmg") or {}
+    package = artifact.get("package") or {}
+    deb = artifact.get("deb") or {}
+    payload = deb.get("payload") or {}
     verification = artifact.get("verification") or {}
     source = artifact.get("source") or {}
     lines = [
-        f"### {artifact.get('platform', 'unknown')}",
+        f"### linux deb {artifact.get('architecture', 'unknown')}",
         "",
         f"- Classification: `{artifact.get('classification', 'unknown')}`",
         f"- SHA-256: `{artifact.get('sha256')}`",
@@ -23,21 +24,28 @@ def _artifact_section(artifact: dict[str, Any]) -> str:
     ]
     if source.get("url"):
         lines.append(f"- Source URL: {source['url']}")
-    if app.get("version"):
-        lines.append(f"- App version: `{app['version']}`")
-    if app.get("build"):
-        lines.append(f"- App build: `{app['build']}`")
+    if package.get("name"):
+        lines.append(f"- Package: `{package['name']}`")
+    if package.get("version"):
+        lines.append(f"- Package version: `{package['version']}`")
+    if package.get("architecture"):
+        lines.append(f"- Architecture: `{package['architecture']}`")
+    if package.get("maintainer"):
+        lines.append(f"- Maintainer: `{package['maintainer']}`")
     if verification:
         lines.append(f"- Verification passed: `{bool(verification.get('passed'))}`")
-    if verification.get("team_id"):
-        lines.append(f"- Signing Team ID: `{verification['team_id']}`")
-    if dmg.get("top_level_entries"):
-        entries = ", ".join(f"`{entry}`" for entry in dmg["top_level_entries"])
-        lines.append(f"- DMG top-level entries: {entries}")
-    if "external_payloads" in dmg:
-        payloads = dmg.get("external_payloads") or []
-        value = "none" if not payloads else ", ".join(f"`{item}`" for item in payloads)
-        lines.append(f"- External DMG payloads: {value}")
+    if payload.get("file_count") is not None:
+        lines.append(f"- DEB payload files: `{payload['file_count']}`")
+    if "unexpected_executable_payloads" in payload:
+        unexpected = payload.get("unexpected_executable_payloads") or []
+        value = "none" if not unexpected else ", ".join(f"`{item}`" for item in unexpected)
+        lines.append(f"- Unexpected executable payloads: {value}")
+    scripts = deb.get("maintainer_scripts") or []
+    if scripts:
+        script_names = ", ".join(f"`{script['name']}`" for script in scripts)
+        lines.append(f"- Maintainer scripts: {script_names}")
+    else:
+        lines.append("- Maintainer scripts: none")
     return "\n".join(lines)
 
 
@@ -58,7 +66,7 @@ def render_release_notes(manifest: dict[str, Any]) -> str:
     ]
     sections.extend(f"- {item}" for item in limitations)
     sections.append("")
-    sections.append("See `codex-desktop-manifest.json` attached to this release for full machine-readable evidence.")
+    sections.append("See `chatgpt-deb-manifest.json` attached to this release for full machine-readable evidence.")
     sections.append("")
     return "\n".join(sections)
 

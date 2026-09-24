@@ -2,15 +2,16 @@
 set -euo pipefail
 
 if [ "$#" -ne 4 ]; then
-  echo "usage: $0 <platform> <url> <artifact-output> <metadata-output>" >&2
+  echo "usage: $0 <architecture> <url> <artifact-output> <metadata-output>" >&2
   exit 64
 fi
 
-platform="$1"
+architecture="$1"
 url="$2"
 artifact_output="$3"
 metadata_output="$4"
-macos_url="https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"
+amd64_url="https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb"
+arm64_url="https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_arm64.deb"
 
 tmpdir="$(mktemp -d)"
 headers_file="$tmpdir/headers.txt"
@@ -28,10 +29,11 @@ trap cleanup EXIT
 
 mkdir -p "$(dirname "$artifact_output")" "$(dirname "$metadata_output")"
 
-case "${platform}:${url}" in
-  "macos:${macos_url}") ;;
+case "${architecture}:${url}" in
+  "amd64:${amd64_url}") ;;
+  "arm64:${arm64_url}") ;;
   *)
-    echo "Refusing to download unapproved source URL for platform '${platform}': ${url}" >&2
+    echo "Refusing to download unapproved Linux DEB source URL for architecture '${architecture}': ${url}" >&2
     exit 65
     ;;
 esac
@@ -48,13 +50,13 @@ curl \
   --write-out 'effective_url=%{url_effective}\nhttp_code=%{http_code}\ncontent_type=%{content_type}\nsize_download=%{size_download}\n' \
   "$url" > "$metrics_file"
 
-"$python_bin" - "$platform" "$url" "$headers_file" "$metrics_file" "$metadata_output" <<'PY'
+"$python_bin" - "$architecture" "$url" "$headers_file" "$metrics_file" "$metadata_output" <<'PY'
 import json
 import re
 import sys
 from pathlib import Path
 
-platform, url, headers_path, metrics_path, output_path = sys.argv[1:]
+architecture, url, headers_path, metrics_path, output_path = sys.argv[1:]
 
 metrics = {}
 for line in Path(metrics_path).read_text(encoding="utf-8").splitlines():
@@ -76,7 +78,9 @@ for line in lines[1:]:
     headers[key.strip().lower()] = value.strip()
 
 metadata = {
-    "platform": platform,
+    "platform": "linux",
+    "format": "deb",
+    "architecture": architecture,
     "url": url,
     "effective_url": metrics.get("effective_url"),
     "http_status": int(metrics.get("http_code") or 0),

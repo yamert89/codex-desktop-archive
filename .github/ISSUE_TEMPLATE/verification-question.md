@@ -12,7 +12,8 @@ Link to the GitHub Release:
 
 ## Platform
 
-- [ ] macOS
+- [ ] Linux DEB amd64
+- [ ] Linux DEB arm64
 
 ## What You Checked
 

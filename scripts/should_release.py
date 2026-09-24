@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Decide whether a candidate ChatGPT desktop manifest deserves a new release."""
+"""Decide whether a candidate ChatGPT Linux DEB manifest deserves a new release."""
 
 from __future__ import annotations
 
@@ -11,8 +11,9 @@ from typing import Any
 
 def _artifact_key(artifact: dict[str, Any]) -> str:
     platform = artifact.get("platform", "unknown")
-    classification = artifact.get("classification", "unknown")
-    return f"{platform}:{classification}"
+    package_format = artifact.get("format", "unknown")
+    architecture = artifact.get("architecture", "unknown")
+    return f"{platform}:{package_format}:{architecture}"
 
 
 def _artifacts_by_key(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -39,26 +40,28 @@ def decide_release(
     candidate_identity = release.get("identity", {})
 
     if latest_identity.get("version") != candidate_identity.get("version"):
-        reasons.append("app version changed")
-    if latest_identity.get("build") != candidate_identity.get("build"):
-        reasons.append("app build changed")
+        reasons.append("package version changed")
+    if latest_identity.get("architectures") != candidate_identity.get("architectures"):
+        reasons.append("architecture set changed")
 
     latest_artifacts = _artifacts_by_key(latest)
     candidate_artifacts = _artifacts_by_key(candidate)
     for key, candidate_artifact in candidate_artifacts.items():
         latest_artifact = latest_artifacts.get(key)
-        platform = candidate_artifact.get("platform", "unknown")
+        architecture = candidate_artifact.get("architecture", "unknown")
         if latest_artifact is None:
-            reasons.append(f"{platform} artifact added")
+            reasons.append(f"{architecture} artifact added")
             continue
         if latest_artifact.get("sha256") != candidate_artifact.get("sha256"):
-            reasons.append(f"{platform} sha256 changed")
+            reasons.append(f"{architecture} sha256 changed")
         elif latest_artifact.get("size") != candidate_artifact.get("size"):
-            reasons.append(f"{platform} size changed")
+            reasons.append(f"{architecture} size changed")
+        elif latest_artifact.get("source", {}).get("effective_url") != candidate_artifact.get("source", {}).get("effective_url"):
+            reasons.append(f"{architecture} source identity changed")
 
     for key in sorted(set(latest_artifacts) - set(candidate_artifacts)):
-        platform = latest_artifacts[key].get("platform", "unknown")
-        reasons.append(f"{platform} artifact removed")
+        architecture = latest_artifacts[key].get("architecture", "unknown")
+        reasons.append(f"{architecture} artifact removed")
 
     if reasons:
         return {

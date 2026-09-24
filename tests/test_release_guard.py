@@ -1,7 +1,7 @@
+import json
 import sys
 import tempfile
 import unittest
-import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,80 +15,105 @@ from release_guard import (
 )
 
 
-MAC_SHA = "370a76cf980208943e85e7b19eb24155e060585a7ee69e8a50db622697883347"
+AMD64_SHA = "cae04b232b1c698cc0ee70e9423bf46ebd28f2f0aab329d841431a9372e438b9"
+ARM64_SHA = "b4c403d65eb420c307177788a98ca346f1b63ef5ffe3739199d7b3792cc7a012"
+VERSION = "26.803.81509"
+
+
+def artifact(arch, sha):
+    return {
+        "platform": "linux",
+        "format": "deb",
+        "architecture": arch,
+        "classification": "full-installer",
+        "filename": f"ChatGPT-Desktop-{VERSION}-linux-{arch}.deb",
+        "sha256": sha,
+        "size": 21,
+        "source": {
+            "platform": "linux",
+            "format": "deb",
+            "architecture": arch,
+            "url": f"https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_{arch}.deb",
+            "effective_url": f"https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_{arch}.deb",
+            "http_status": 200,
+            "headers": {"content-type": "application/vnd.debian.binary-package"},
+        },
+        "package": {
+            "name": "chatgpt",
+            "version": VERSION,
+            "architecture": arch,
+            "maintainer": "OpenAI <support@openai.com>",
+            "installed_size": "123",
+            "depends": "libgtk-3-0",
+            "control_fields": {
+                "package": "chatgpt",
+                "version": VERSION,
+                "architecture": arch,
+                "maintainer": "OpenAI <support@openai.com>",
+            },
+        },
+        "deb": {
+            "payload": {
+                "file_count": 2,
+                "entries": [
+                    {"mode": "drwxr-xr-x", "owner_group": "root/root", "size": 0, "date": "2026-08-01", "time": "00:00", "path": "./usr/"},
+                    {"mode": "-rwxr-xr-x", "owner_group": "root/root", "size": 12, "date": "2026-08-01", "time": "00:00", "path": "./usr/bin/chatgpt"},
+                ],
+                "executable_payloads": ["./usr/bin/chatgpt"],
+                "unexpected_executable_payloads": [],
+            },
+            "maintainer_scripts": [
+                {"name": "postinst", "size": 10, "sha256": "a" * 64, "executable": True, "suspicious_patterns": []}
+            ],
+        },
+        "verification": {
+            "passed": True,
+            "expected_package": "chatgpt",
+            "expected_architecture": arch,
+            "checks": {
+                "dpkg_deb_control_read": True,
+                "dpkg_deb_payload_list": True,
+                "expected_package": True,
+                "expected_architecture": True,
+                "version_present": True,
+                "maintainer_present": True,
+                "control_scripts_inspected": True,
+                "no_suspicious_maintainer_scripts": True,
+                "no_unexpected_executable_payloads": True,
+            },
+        },
+    }
 
 
 def valid_manifest():
     return {
         "schema_version": "1.0",
-        "captured_at": "2026-05-30T12:34:56Z",
-        "source_page": "https://openai.com/codex/",
-        "repository": "KonstantinMeleshkin/codex-desktop-archive",
+        "captured_at": "2026-08-15T12:34:56Z",
+        "source_page": "https://learn.chatgpt.com/docs/linux/linux-app",
+        "repository": "KonstantinMeleshkin/chatgpt-deb-archive",
         "workflow": {"run_id": "123", "commit_sha": "a" * 40},
         "release": {
-            "tag": "chatgpt-v26.707.51957",
-            "title": "ChatGPT Desktop 26.707.51957",
-            "identity": {"product": "chatgpt-desktop", "version": "26.707.51957", "build": "5175"},
+            "tag": f"chatgpt-deb-v{VERSION}",
+            "title": f"ChatGPT Desktop Linux DEB {VERSION}",
+            "identity": {
+                "product": "chatgpt-desktop-linux-deb",
+                "version": VERSION,
+                "package": "chatgpt",
+                "architectures": ["amd64", "arm64"],
+            },
             "evidence_level": "strong",
         },
-        "artifacts": [
-            {
-                "platform": "macos",
-                "classification": "full-installer",
-                "filename": "ChatGPT-Desktop-26.707.51957-macos.dmg",
-                "sha256": MAC_SHA,
-                "size": 13,
-                "source": {
-                    "url": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg",
-                    "effective_url": "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg",
-                    "http_status": 200,
-                    "headers": {"content-type": "application/x-apple-diskimage"},
-                },
-                "app": {
-                    "bundle_id": "com.openai.codex",
-                    "name": "ChatGPT",
-                    "executable": "ChatGPT",
-                    "app_count": 1,
-                    "version": "26.707.51957",
-                    "build": "5175",
-                },
-                "dmg": {
-                    "top_level_entries": ["Applications", "ChatGPT.app"],
-                    "unexpected_top_level_entries": [],
-                    "external_payloads": [],
-                },
-                "verification": {
-                    "passed": True,
-                    "team_id": "2DC432GLL2",
-                    "origin": "Developer ID Application: OpenAI OpCo, LLC (2DC432GLL2)",
-                    "checks": {
-                        "hdiutil_verify": True,
-                        "codesign_verify": True,
-                        "spctl_assessment": True,
-                        "stapler_validate": True,
-                        "expected_bundle_id": True,
-                        "expected_name": True,
-                        "expected_executable": True,
-                        "expected_single_app": True,
-                        "expected_team_id": True,
-                        "expected_origin": True,
-                        "expected_volume_top_level": True,
-                        "no_external_payloads": True,
-                    },
-                },
-            }
-        ],
+        "artifacts": [artifact("amd64", AMD64_SHA), artifact("arm64", ARM64_SHA)],
         "limitations": [],
     }
 
 
-def valid_inspection():
-    artifact = valid_manifest()["artifacts"][0]
-    return {
-        "classification": artifact["classification"],
-        "app": artifact["app"],
-        "dmg": artifact["dmg"],
-        "verification": artifact["verification"],
+def valid_inspection(arch):
+    return artifact(arch, AMD64_SHA if arch == "amd64" else ARM64_SHA) | {
+        "filename": None,
+        "sha256": None,
+        "size": None,
+        "source": None,
     }
 
 
@@ -96,78 +121,74 @@ class ReleaseGuardTests(unittest.TestCase):
     def test_valid_manifest_passes(self):
         validate_manifest(valid_manifest())
 
-    def test_rejects_any_second_artifact(self):
+    def test_rejects_missing_architecture(self):
         manifest = valid_manifest()
-        manifest["artifacts"].append({"platform": "other", "classification": "unsupported"})
+        manifest["artifacts"] = [manifest["artifacts"][0]]
 
-        with self.assertRaisesRegex(SecurityPolicyError, "exactly one macOS artifact"):
+        with self.assertRaisesRegex(SecurityPolicyError, "exactly amd64 and arm64"):
             validate_manifest(manifest)
 
-    def test_rejects_unsafe_release_tag(self):
+    def test_rejects_extra_architecture(self):
         manifest = valid_manifest()
-        manifest["release"]["tag"] = "chatgpt-v26.707.51957\nbad"
+        extra = artifact("riscv64", AMD64_SHA)
+        extra["filename"] = f"ChatGPT-Desktop-{VERSION}-linux-riscv64.deb"
+        manifest["artifacts"].append(extra)
 
-        with self.assertRaisesRegex(SecurityPolicyError, "unsafe release tag"):
+        with self.assertRaisesRegex(SecurityPolicyError, "exactly amd64 and arm64"):
             validate_manifest(manifest)
 
-    def test_rejects_unsafe_workflow_commit_sha(self):
+    def test_rejects_wrong_package_name(self):
         manifest = valid_manifest()
-        manifest["workflow"]["commit_sha"] = "abc123\nbad"
+        manifest["artifacts"][0]["package"]["name"] = "other"
 
-        with self.assertRaisesRegex(SecurityPolicyError, "workflow commit SHA"):
+        with self.assertRaisesRegex(SecurityPolicyError, "package name"):
             validate_manifest(manifest)
 
-    def test_rejects_wrong_macos_bundle_id(self):
+    def test_rejects_mismatched_package_versions(self):
         manifest = valid_manifest()
-        manifest["artifacts"][0]["app"]["bundle_id"] = "com.openai.other"
+        manifest["artifacts"][1]["package"]["version"] = "26.900.1"
 
-        with self.assertRaisesRegex(SecurityPolicyError, "macOS bundle id"):
-            validate_manifest(manifest)
-
-    def test_rejects_failed_verification_flag(self):
-        manifest = valid_manifest()
-        manifest["artifacts"][0]["verification"]["checks"]["spctl_assessment"] = False
-
-        with self.assertRaisesRegex(SecurityPolicyError, "macOS verification checks"):
-            validate_manifest(manifest)
-
-    def test_rejects_unexpected_dmg_top_level_entries(self):
-        manifest = valid_manifest()
-        manifest["artifacts"][0]["dmg"]["top_level_entries"].append("Install.command")
-        manifest["artifacts"][0]["dmg"]["unexpected_top_level_entries"].append("Install.command")
-        manifest["artifacts"][0]["verification"]["checks"]["expected_volume_top_level"] = False
-
-        with self.assertRaisesRegex(SecurityPolicyError, "unexpected DMG top-level"):
-            validate_manifest(manifest)
-
-    def test_rejects_external_dmg_payloads(self):
-        manifest = valid_manifest()
-        manifest["artifacts"][0]["dmg"]["external_payloads"].append("hidden/helper.sh")
-        manifest["artifacts"][0]["verification"]["checks"]["no_external_payloads"] = False
-
-        with self.assertRaisesRegex(SecurityPolicyError, "external DMG payload"):
+        with self.assertRaisesRegex(SecurityPolicyError, "all DEB package versions"):
             validate_manifest(manifest)
 
     def test_rejects_unexpected_source_url(self):
         manifest = valid_manifest()
-        manifest["artifacts"][0]["source"]["effective_url"] = "https://example.com/ChatGPT.dmg"
+        manifest["artifacts"][0]["source"]["effective_url"] = "https://example.com/chatgpt_amd64.deb"
 
-        with self.assertRaisesRegex(SecurityPolicyError, "macOS effective URL"):
+        with self.assertRaisesRegex(SecurityPolicyError, "effective URL"):
+            validate_manifest(manifest)
+
+    def test_rejects_bad_sha(self):
+        manifest = valid_manifest()
+        manifest["artifacts"][0]["sha256"] = "bad"
+
+        with self.assertRaisesRegex(SecurityPolicyError, "SHA-256"):
+            validate_manifest(manifest)
+
+    def test_rejects_unexpected_executable_payloads(self):
+        manifest = valid_manifest()
+        payload = manifest["artifacts"][0]["deb"]["payload"]
+        payload["unexpected_executable_payloads"] = ["./tmp/run.sh"]
+        manifest["artifacts"][0]["verification"]["checks"]["no_unexpected_executable_payloads"] = False
+
+        with self.assertRaisesRegex(SecurityPolicyError, "unexpected executable payload"):
             validate_manifest(manifest)
 
     def test_verify_asset_directory_checks_hashes(self):
         manifest = valid_manifest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
+            (root / f"ChatGPT-Desktop-{VERSION}-linux-amd64.deb").write_bytes(b"chatgpt amd64 package")
+            (root / f"ChatGPT-Desktop-{VERSION}-linux-arm64.deb").write_bytes(b"chatgpt arm64 package")
             verify_asset_directory(manifest, root, require_manifest_asset=False)
 
-    def test_verify_asset_directory_rejects_extra_assets(self):
+    def test_verify_asset_directory_rejects_unexpected_assets(self):
         manifest = valid_manifest()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
-            (root / "unexpected.dmg").write_text("bad", encoding="utf-8")
+            (root / f"ChatGPT-Desktop-{VERSION}-linux-amd64.deb").write_bytes(b"chatgpt amd64 package")
+            (root / f"ChatGPT-Desktop-{VERSION}-linux-arm64.deb").write_bytes(b"chatgpt arm64 package")
+            (root / "unexpected.deb").write_text("bad", encoding="utf-8")
 
             with self.assertRaisesRegex(SecurityPolicyError, "unexpected release asset"):
                 verify_asset_directory(manifest, root, require_manifest_asset=False)
@@ -180,8 +201,9 @@ class ReleaseGuardTests(unittest.TestCase):
             asset_dir.mkdir()
             expected_notes = root / "expected-release-notes.md"
             expected_notes.write_text("trusted notes\n", encoding="utf-8")
-            (asset_dir / "ChatGPT-Desktop-26.707.51957-macos.dmg").write_bytes(b"codex desktop")
-            (asset_dir / "codex-desktop-manifest.json").write_text(
+            (asset_dir / f"ChatGPT-Desktop-{VERSION}-linux-amd64.deb").write_bytes(b"chatgpt amd64 package")
+            (asset_dir / f"ChatGPT-Desktop-{VERSION}-linux-arm64.deb").write_bytes(b"chatgpt arm64 package")
+            (asset_dir / "chatgpt-deb-manifest.json").write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
@@ -197,29 +219,33 @@ class ReleaseGuardTests(unittest.TestCase):
 
     def test_verify_local_artifact_accepts_matching_fresh_inspection(self):
         manifest = valid_manifest()
-        inspection = valid_inspection()
+        inspection = valid_inspection("amd64")
+        for key in ["filename", "sha256", "size", "source"]:
+            inspection.pop(key, None)
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "ChatGPT-Desktop-26.707.51957-macos.dmg"
+            artifact_path = root / f"ChatGPT-Desktop-{VERSION}-linux-amd64.deb"
             inspection_path = root / "inspection.json"
-            artifact.write_bytes(b"codex desktop")
+            artifact_path.write_bytes(b"chatgpt amd64 package")
             inspection_path.write_text(json.dumps(inspection), encoding="utf-8")
 
-            verify_local_artifact(manifest, artifact, inspection_path)
+            verify_local_artifact(manifest, artifact_path, inspection_path)
 
     def test_verify_local_artifact_rejects_publish_side_inspection_mismatch(self):
         manifest = valid_manifest()
-        inspection = valid_inspection()
-        inspection["app"]["bundle_id"] = "com.openai.other"
+        inspection = valid_inspection("amd64")
+        for key in ["filename", "sha256", "size", "source"]:
+            inspection.pop(key, None)
+        inspection["package"]["name"] = "other"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "ChatGPT-Desktop-26.707.51957-macos.dmg"
+            artifact_path = root / f"ChatGPT-Desktop-{VERSION}-linux-amd64.deb"
             inspection_path = root / "inspection.json"
-            artifact.write_bytes(b"codex desktop")
+            artifact_path.write_bytes(b"chatgpt amd64 package")
             inspection_path.write_text(json.dumps(inspection), encoding="utf-8")
 
-            with self.assertRaisesRegex(SecurityPolicyError, "fresh macOS inspection"):
-                verify_local_artifact(manifest, artifact, inspection_path)
+            with self.assertRaisesRegex(SecurityPolicyError, "fresh amd64 DEB inspection"):
+                verify_local_artifact(manifest, artifact_path, inspection_path)
 
 
 if __name__ == "__main__":

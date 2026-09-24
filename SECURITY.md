@@ -29,5 +29,6 @@ If the report involves a sensitive exploit path, avoid posting exploit details p
 - No silent release overwrites.
 - No custom repackaging of ChatGPT Desktop installers.
 - No stronger claims than stored evidence supports.
-- macOS releases must pass signature and notarization checks before publication.
-- macOS DMGs must not contain unexpected top-level entries or executable/package/script payloads outside `ChatGPT.app`.
+- Linux DEB releases must pass package metadata and payload inventory checks before publication.
+- Linux DEB packages must come from the approved OpenAI-linked amd64 and arm64 source URLs.
+- Linux DEB maintainer scripts must be inventoried without being executed by the workflow.

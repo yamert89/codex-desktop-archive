@@ -15,21 +15,30 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("if: steps.decision.outputs.should_release != 'true'", workflow)
         self.assertIn("./scripts/verify_existing_release.sh manifest/latest.json out/latest-release-notes.md", workflow)
 
-    def test_publish_job_reinspects_macos_artifact(self):
+    def test_workflow_runs_on_ubuntu(self):
+        workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("runs-on: ubuntu-latest", workflow)
+        self.assertNotIn("runs-on: macos-latest", workflow)
+
+    def test_publish_job_reinspects_deb_artifacts(self):
         workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
 
         publish_section = workflow.split("  publish:", 1)[1]
-        self.assertIn("runs-on: macos-latest", publish_section)
-        self.assertIn("./scripts/inspect_macos.sh \"$macos_asset\" out/final-publish-macos-inspection.json", publish_section)
+        self.assertIn("python3 scripts/inspect_deb.py \"$amd64_asset\" out/final-publish-deb-amd64-inspection.json --architecture amd64", publish_section)
+        self.assertIn("python3 scripts/inspect_deb.py \"$arm64_asset\" out/final-publish-deb-arm64-inspection.json --architecture arm64", publish_section)
         self.assertIn("python3 scripts/release_guard.py verify-local-artifact", publish_section)
 
-    def test_workflow_uses_chatgpt_source_and_artifact_names(self):
+    def test_workflow_uses_linux_deb_source_and_artifact_names(self):
         workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("MACOS_URL: https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg", workflow)
-        self.assertIn("artifacts/ChatGPT.dmg", workflow)
-        self.assertIn("ChatGPT-Desktop-${version}-macos.dmg", workflow)
-        self.assertNotIn("Codex-Desktop-${version}-macos.dmg", workflow)
+        self.assertIn("DEB_AMD64_URL: https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb", workflow)
+        self.assertIn("DEB_ARM64_URL: https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_arm64.deb", workflow)
+        self.assertIn("artifacts/chatgpt_amd64.deb", workflow)
+        self.assertIn("artifacts/chatgpt_arm64.deb", workflow)
+        self.assertIn("ChatGPT-Desktop-${version}-linux-amd64.deb", workflow)
+        self.assertIn("ChatGPT-Desktop-${version}-linux-arm64.deb", workflow)
+        self.assertNotIn("ChatGPT-Desktop-${version}-macos.dmg", workflow)
 
     def test_publish_script_creates_git_tag_before_draft_release(self):
         script = PUBLISH_SCRIPT.read_text(encoding="utf-8")

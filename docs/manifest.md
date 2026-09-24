@@ -1,8 +1,6 @@
 # Manifest Format
 
-Every release includes `codex-desktop-manifest.json`.
-
-New manifests describe the unified ChatGPT desktop app, including the Codex experience. Older manifests in `manifest/history/` remain unchanged historical Codex Desktop records.
+Every release includes `chatgpt-deb-manifest.json`.
 
 The manifest is designed to be readable by humans and strict enough for scripts.
 
@@ -11,20 +9,21 @@ The manifest is designed to be readable by humans and strict enough for scripts.
 ```json
 {
   "schema_version": "1.0",
-  "captured_at": "2026-05-30T12:34:56Z",
-  "source_page": "https://openai.com/codex/",
-  "repository": "KonstantinMeleshkin/codex-desktop-archive",
+  "captured_at": "2026-08-15T12:34:56Z",
+  "source_page": "https://learn.chatgpt.com/docs/linux/linux-app",
+  "repository": "KonstantinMeleshkin/chatgpt-deb-archive",
   "workflow": {
     "run_id": "123456789",
     "commit_sha": "0123456789abcdef0123456789abcdef01234567"
   },
   "release": {
-    "tag": "chatgpt-v26.707.51957",
-    "title": "ChatGPT Desktop 26.707.51957",
+    "tag": "chatgpt-deb-v26.803.81509",
+    "title": "ChatGPT Desktop Linux DEB 26.803.81509",
     "identity": {
-      "product": "chatgpt-desktop",
-      "version": "26.707.51957",
-      "build": "5175"
+      "product": "chatgpt-desktop-linux-deb",
+      "version": "26.803.81509",
+      "package": "chatgpt",
+      "architectures": ["amd64", "arm64"]
     },
     "evidence_level": "strong"
   },
@@ -37,41 +36,44 @@ The manifest is designed to be readable by humans and strict enough for scripts.
 
 Each artifact records:
 
-- platform
-- classification
+- platform: `linux`
+- format: `deb`
+- architecture: `amd64` or `arm64`
+- classification: `full-installer`
 - filename
 - SHA-256
 - byte size
 - source metadata
-- app metadata when available
-- mounted DMG top-level inventory and rejected external payload list
+- package metadata from the DEB control file
+- DEB payload inventory
+- maintainer script inventory
 - verification result
 
 ## Classifications
 
 `full-installer`:
 
-- The artifact is a full installer package for a platform.
-- Current macOS DMG captures use this classification.
+- The artifact is a complete DEB package for one architecture.
+- Current captures require both `amd64` and `arm64`.
 
 ## Release Identity
 
-When the macOS app version is available, release tags use:
+When both DEB packages expose the same package version, release tags use:
 
 ```text
-chatgpt-v<version>
+chatgpt-deb-v<version>
 ```
 
 Example:
 
 ```text
-chatgpt-v26.707.51957
+chatgpt-deb-v26.803.81509
 ```
 
-When app version is not available, tags fall back to:
+When package version is not available or does not match across architectures, tags fall back to:
 
 ```text
-chatgpt-capture-YYYY-MM-DD
+chatgpt-deb-capture-YYYY-MM-DD
 ```
 
-Fallback manifests use `partial` evidence level. The publication workflow currently rejects partial manifests, so normal public releases require a macOS app version and strong evidence.
+Fallback manifests use `partial` evidence level. The publication workflow rejects partial manifests, so normal public releases require matching package versions and strong evidence.

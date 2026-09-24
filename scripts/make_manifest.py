@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build release manifests for the ChatGPT desktop archive."""
+"""Build release manifests for the ChatGPT Linux DEB archive."""
 
 from __future__ import annotations
 
@@ -12,14 +12,17 @@ from typing import Any
 
 
 SCHEMA_VERSION = "1.0"
-SOURCE_PAGE = "https://openai.com/codex/"
-MACOS_URL = "https://persistent.oaistatic.com/codex-app-prod/ChatGPT.dmg"
+SOURCE_PAGE = "https://learn.chatgpt.com/docs/linux/linux-app"
+DEB_URLS = {
+    "amd64": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb",
+    "arm64": "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_arm64.deb",
+}
 
 LIMITATIONS = [
     "This project is not affiliated with OpenAI.",
-    "Artifacts are archived from official OpenAI-linked download URLs.",
+    "Artifacts are archived from official OpenAI-linked Linux DEB download URLs.",
     "Historical byte identity cannot be proven without an OpenAI-published historical hash.",
-    "This archive supports the macOS ChatGPT desktop app, which includes Codex.",
+    "This archive supports the Linux ChatGPT desktop app preview for Debian and Ubuntu systems.",
 ]
 
 
@@ -34,32 +37,34 @@ def file_identity(path: Path) -> dict[str, Any]:
 
 
 def release_identity(artifacts: list[dict[str, Any]], captured_at: str) -> dict[str, Any]:
-    macos = next((item for item in artifacts if item.get("platform") == "macos"), None)
-    app = (macos or {}).get("app") or {}
-    version = app.get("version")
-    build = app.get("build")
-
-    if version:
-        identity = {
-            "product": "chatgpt-desktop",
-            "version": version,
-            "build": build,
-        }
+    versions = {
+        artifact.get("package", {}).get("version")
+        for artifact in artifacts
+        if artifact.get("package", {}).get("version")
+    }
+    if len(versions) == 1:
+        version = versions.pop()
         return {
-            "tag": f"chatgpt-v{version}",
-            "title": f"ChatGPT Desktop {version}",
-            "identity": identity,
+            "tag": f"chatgpt-deb-v{version}",
+            "title": f"ChatGPT Desktop Linux DEB {version}",
+            "identity": {
+                "product": "chatgpt-desktop-linux-deb",
+                "version": version,
+                "package": "chatgpt",
+                "architectures": sorted(artifact["architecture"] for artifact in artifacts),
+            },
             "evidence_level": "strong",
         }
 
     capture_date = captured_at[:10]
     return {
-        "tag": f"chatgpt-capture-{capture_date}",
-        "title": f"ChatGPT Desktop capture {capture_date}",
+        "tag": f"chatgpt-deb-capture-{capture_date}",
+        "title": f"ChatGPT Desktop Linux DEB capture {capture_date}",
         "identity": {
-            "product": "chatgpt-desktop",
+            "product": "chatgpt-desktop-linux-deb",
             "version": None,
-            "build": None,
+            "package": "chatgpt",
+            "architectures": sorted(artifact["architecture"] for artifact in artifacts),
         },
         "evidence_level": "partial",
     }
@@ -73,13 +78,12 @@ def build_manifest(
     workflow_sha: str,
     artifacts: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    sorted_artifacts = sorted(artifacts, key=lambda item: item.get("platform", ""))
+    sorted_artifacts = sorted(artifacts, key=lambda item: item.get("architecture", ""))
     release = release_identity(sorted_artifacts, captured_at)
     version = release["identity"].get("version")
     if version:
         for artifact in sorted_artifacts:
-            if artifact.get("platform") == "macos":
-                artifact["filename"] = f"ChatGPT-Desktop-{version}-macos.dmg"
+            artifact["filename"] = f"ChatGPT-Desktop-{version}-linux-{artifact['architecture']}.deb"
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -107,7 +111,7 @@ def _utc_now() -> str:
 
 def _artifact_from_inputs(
     *,
-    platform: str,
+    architecture: str,
     artifact_path: Path,
     source_path: Path,
     inspection_path: Path,
@@ -116,7 +120,9 @@ def _artifact_from_inputs(
     inspection = _load_json(inspection_path)
     identity = file_identity(artifact_path)
     result = {
-        "platform": platform,
+        "platform": "linux",
+        "format": "deb",
+        "architecture": architecture,
         "filename": artifact_path.name,
         "sha256": identity["sha256"],
         "size": identity["size"],
@@ -127,27 +133,35 @@ def _artifact_from_inputs(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build a ChatGPT desktop release manifest.")
+    parser = argparse.ArgumentParser(description="Build a ChatGPT Linux DEB release manifest.")
     parser.add_argument("--repository", required=True)
     parser.add_argument("--workflow-run-id", required=True)
     parser.add_argument("--workflow-sha", required=True)
     parser.add_argument("--captured-at", default=_utc_now())
-    parser.add_argument("--macos-artifact", type=Path)
-    parser.add_argument("--macos-source", type=Path)
-    parser.add_argument("--macos-inspection", type=Path)
+    parser.add_argument("--deb-artifact", action="append", type=Path, default=[])
+    parser.add_argument("--deb-source", action="append", type=Path, default=[])
+    parser.add_argument("--deb-inspection", action="append", type=Path, default=[])
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
+    if not (len(args.deb_artifact) == len(args.deb_source) == len(args.deb_inspection)):
+        raise SystemExit("--deb-artifact, --deb-source, and --deb-inspection must be provided in matching counts")
+
     artifacts = []
-    if args.macos_artifact:
+    for artifact_path, source_path, inspection_path in zip(args.deb_artifact, args.deb_source, args.deb_inspection):
+        inspection = _load_json(inspection_path)
+        architecture = inspection.get("package", {}).get("architecture")
+        if not architecture:
+            raise SystemExit(f"Could not determine architecture from {inspection_path}")
         artifacts.append(
             _artifact_from_inputs(
-                platform="macos",
-                artifact_path=args.macos_artifact,
-                source_path=args.macos_source,
-                inspection_path=args.macos_inspection,
+                architecture=architecture,
+                artifact_path=artifact_path,
+                source_path=source_path,
+                inspection_path=inspection_path,
             )
         )
+
     manifest = build_manifest(
         captured_at=args.captured_at,
         repository=args.repository,
