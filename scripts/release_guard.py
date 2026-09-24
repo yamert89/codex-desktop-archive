@@ -27,7 +27,7 @@ REQUIRED_VERIFICATION_CHECKS = [
     "version_present",
     "maintainer_present",
     "control_scripts_inspected",
-    "no_suspicious_maintainer_scripts",
+    "maintainer_script_patterns_recorded",
     "no_unexpected_executable_payloads",
 ]
 

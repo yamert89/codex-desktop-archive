@@ -78,7 +78,7 @@ def artifact(arch, sha):
                 "version_present": True,
                 "maintainer_present": True,
                 "control_scripts_inspected": True,
-                "no_suspicious_maintainer_scripts": True,
+                "maintainer_script_patterns_recorded": True,
                 "no_unexpected_executable_payloads": True,
             },
         },

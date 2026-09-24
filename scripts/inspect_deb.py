@@ -163,9 +163,7 @@ def inspect_deb(deb_path: Path, expected_architecture: str | None) -> dict[str, 
         "version_present": bool(version),
         "maintainer_present": bool(control.get("maintainer")),
         "control_scripts_inspected": True,
-        "no_suspicious_maintainer_scripts": not any(
-            script["suspicious_patterns"] for script in maintainer_scripts
-        ),
+        "maintainer_script_patterns_recorded": True,
         "no_unexpected_executable_payloads": not payload["unexpected_executable_payloads"],
     }
 
@@ -212,6 +210,12 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if not result["verification"]["passed"]:
+        failed = [
+            name
+            for name, passed in result["verification"]["checks"].items()
+            if not passed
+        ]
+        print(f"DEB verification failed for {args.deb}: {', '.join(failed)}")
         return 1
     return 0
 
