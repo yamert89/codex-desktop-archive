@@ -3,7 +3,7 @@ name: Capture ChatGPT Linux DEB
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "17 6 * * *"
 
 permissions:
   contents: read
@@ -74,9 +74,9 @@ jobs:
     needs: capture-deb
     runs-on: ubuntu-latest
     outputs:
-      should_release: ${{ steps.decision.outputs.should_release }}
+      should_release: ${{ steps.effective_decision.outputs.should_release }}
       tag: ${{ steps.decision.outputs.tag }}
-      reason: ${{ steps.decision.outputs.reason }}
+      reason: ${{ steps.effective_decision.outputs.reason }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
@@ -127,8 +127,34 @@ jobs:
           print(f"reason={decision['reason']}")
           PY
 
-      - name: Verify existing release when capture is unchanged
+      - name: Check whether unchanged release exists
+        id: existing_release
         if: steps.decision.outputs.should_release != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.decision.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve effective release decision
+        id: effective_decision
+        run: |
+          if [ "${{ steps.decision.outputs.should_release }}" = "true" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "reason=${{ steps.decision.outputs.reason }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.existing_release.outputs.exists }}" != "true" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "reason=release asset missing for unchanged manifest" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "reason=${{ steps.decision.outputs.reason }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify existing release when capture is unchanged
+        if: steps.effective_decision.outputs.should_release != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -136,10 +162,10 @@ jobs:
             --manifest manifest/latest.json \
             --output out/latest-release-notes.md
           ./scripts/verify_existing_release.sh manifest/latest.json out/latest-release-notes.md
-          echo "No release created: ${{ steps.decision.outputs.reason }}. Existing release verified." >> "$GITHUB_STEP_SUMMARY"
+          echo "No release created: ${{ steps.effective_decision.outputs.reason }}. Existing release verified." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare release package
-        if: steps.decision.outputs.should_release == 'true'
+        if: steps.effective_decision.outputs.should_release == 'true'
         run: |
           python3 scripts/render_release_notes.py \
             --manifest out/candidate-manifest.json \
@@ -163,7 +189,7 @@ jobs:
             --asset-dir release-package/release-assets
 
       - name: Upload release package
-        if: steps.decision.outputs.should_release == 'true'
+        if: steps.effective_decision.outputs.should_release == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: release-package

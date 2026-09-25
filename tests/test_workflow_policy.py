@@ -12,8 +12,16 @@ class WorkflowPolicyTests(unittest.TestCase):
         workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn("Verify existing release when capture is unchanged", workflow)
-        self.assertIn("if: steps.decision.outputs.should_release != 'true'", workflow)
+        self.assertIn("if: steps.effective_decision.outputs.should_release != 'true'", workflow)
         self.assertIn("./scripts/verify_existing_release.sh manifest/latest.json out/latest-release-notes.md", workflow)
+
+    def test_unchanged_manifest_without_release_still_publishes(self):
+        workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
+
+        self.assertIn("Check whether unchanged release exists", workflow)
+        self.assertIn("gh release view \"${{ steps.decision.outputs.tag }}\"", workflow)
+        self.assertIn("release asset missing for unchanged manifest", workflow)
+        self.assertIn("if: steps.effective_decision.outputs.should_release == 'true'", workflow)
 
     def test_workflow_runs_on_ubuntu(self):
         workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
