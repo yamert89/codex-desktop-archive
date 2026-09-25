@@ -3,7 +3,7 @@ name: Capture ChatGPT Linux DEB
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 6 * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read
