@@ -23,6 +23,14 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("release asset missing for unchanged manifest", workflow)
         self.assertIn("if: steps.effective_decision.outputs.should_release == 'true'", workflow)
 
+    def test_verify_release_checkout_keeps_read_credentials_for_tag_fetch(self):
+        workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
+        verify_section = workflow.split("  verify-release:", 1)[1].split("  publish:", 1)[0]
+
+        self.assertIn("fetch-depth: 0", verify_section)
+        self.assertIn("persist-credentials: true", verify_section)
+        self.assertIn("verify_existing_release.sh", verify_section)
+
     def test_workflow_runs_on_ubuntu(self):
         workflow = CAPTURE_WORKFLOW.read_text(encoding="utf-8")
 
